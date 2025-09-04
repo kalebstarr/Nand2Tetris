@@ -14,8 +14,6 @@
 //   Shift X left by 1
 //   Shift Y right by 1
 
-    @i
-    M=0
     @sum
     M=0
 
@@ -30,12 +28,10 @@
 
 (LOOP)
     // LOOP cond
-    @i
+    @num_y
     D=M
-    @16
-    D=D-A
     @ASSIGN
-    D;JGE
+    D;JEQ
 
     // Prepare return
     @POS1
@@ -57,9 +53,6 @@
     M=D+M
 
 (POS2)
-    @i
-    M=M+1
-    
     // Shift x left
     @num_x
     D=M
