@@ -15,7 +15,7 @@ pub fn main() !void {
     // TODO: Improve error output message
     std.debug.assert(argv.len == 2);
 
-    const file_contents = read_file(allocator, argv[1]) catch |err| switch (err) {
+    const file_contents = readFile(allocator, argv[1]) catch |err| switch (err) {
         error.FileNotFound => {
             std.debug.print("Could not open file", .{});
             return;
@@ -28,7 +28,7 @@ pub fn main() !void {
     defer allocator.free(file_contents);
 }
 
-fn read_file(allocator: std.mem.Allocator, file_name: []u8) ![]u8 {
+fn readFile(allocator: std.mem.Allocator, file_name: []u8) ![]u8 {
     const file = try std.fs.cwd().openFile(file_name, .{});
     defer file.close();
 
