@@ -15,13 +15,28 @@ pub fn main() !void {
     // TODO: Improve error output message
     std.debug.assert(argv.len == 2);
 
-    const file = try std.fs.cwd().openFile(argv[1], .{});
+    const file_contents = read_file(allocator, argv[1]) catch |err| switch (err) {
+        error.FileNotFound => {
+            std.debug.print("Could not open file", .{});
+            return;
+        },
+        else => {
+            std.debug.print("An unknown bug occured", .{});
+            return;
+        },
+    };
+    defer allocator.free(file_contents);
+}
+
+fn read_file(allocator: std.mem.Allocator, file_name: []u8) ![]u8 {
+    const file = try std.fs.cwd().openFile(file_name, .{});
     defer file.close();
+
     const buffer = try allocator.alloc(u8, 32 * 1024);
     defer allocator.free(buffer);
+
     var file_reader = file.reader(buffer);
     const file_size = try file_reader.getSize();
-
     const file_contents = try file_reader.interface.readAlloc(allocator, file_size);
-    defer allocator.free(file_contents);
+    return file_contents;
 }
