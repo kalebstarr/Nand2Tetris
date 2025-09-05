@@ -33,6 +33,39 @@ pub fn main() !void {
         },
     };
     defer allocator.free(file_contents);
+
+    var symbol_table = try initSymbolTable(allocator);
+    defer symbol_table.deinit();
+}
+
+fn initSymbolTable(allocator: std.mem.Allocator) !std.StringHashMap(i16) {
+    var hash_map = std.StringHashMap(i16).init(allocator);
+
+    try hash_map.put("R0", 0);
+    try hash_map.put("R1", 1);
+    try hash_map.put("R2", 2);
+    try hash_map.put("R3", 3);
+    try hash_map.put("R4", 4);
+    try hash_map.put("R5", 5);
+    try hash_map.put("R6", 6);
+    try hash_map.put("R7", 7);
+    try hash_map.put("R8", 8);
+    try hash_map.put("R9", 9);
+    try hash_map.put("R10", 10);
+    try hash_map.put("R11", 11);
+    try hash_map.put("R12", 12);
+    try hash_map.put("R13", 13);
+    try hash_map.put("R14", 14);
+    try hash_map.put("R15", 15);
+    try hash_map.put("SCREEN", 16384);
+    try hash_map.put("KBD", 24576);
+    try hash_map.put("SP", 0);
+    try hash_map.put("LCL", 1);
+    try hash_map.put("ARG", 2);
+    try hash_map.put("THIS", 3);
+    try hash_map.put("THAT", 4);
+
+    return hash_map;
 }
 
 fn readFile(allocator: std.mem.Allocator, file_name: []const u8) ![]u8 {
