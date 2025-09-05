@@ -12,8 +12,10 @@ pub fn main() !void {
 
     const argv = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, argv);
-    // TODO: Improve error output message
-    std.debug.assert(argv.len == 2);
+    if (argv.len != 2) {
+        std.debug.print("Invalid number of arguments", .{});
+        return;
+    }
 
     if (!std.mem.endsWith(u8, argv[1], ".asm")) {
         std.debug.print("Invalid file name", .{});
