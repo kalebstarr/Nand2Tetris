@@ -1,5 +1,5 @@
 .{
-    .name = ._06,
+    .name = ._06_assembler,
     .version = "0.0.1",
     .minimum_zig_version = "0.15.1",
     .paths = .{""},
