@@ -15,6 +15,11 @@ pub fn main() !void {
     // TODO: Improve error output message
     std.debug.assert(argv.len == 2);
 
+    if (!std.mem.endsWith(u8, argv[1], ".asm")) {
+        std.debug.print("Invalid file name", .{});
+        return;
+    }
+
     const file_contents = readFile(allocator, argv[1]) catch |err| switch (err) {
         error.FileNotFound => {
             std.debug.print("Could not open file", .{});
@@ -28,7 +33,7 @@ pub fn main() !void {
     defer allocator.free(file_contents);
 }
 
-fn readFile(allocator: std.mem.Allocator, file_name: []u8) ![]u8 {
+fn readFile(allocator: std.mem.Allocator, file_name: []const u8) ![]u8 {
     const file = try std.fs.cwd().openFile(file_name, .{});
     defer file.close();
 
