@@ -22,7 +22,7 @@ pub fn main() !void {
         return;
     }
 
-    var file_contents = readFile(allocator, argv[1]) catch |err| switch (err) {
+    var lines = readFile(allocator, argv[1]) catch |err| switch (err) {
         error.FileNotFound => {
             std.debug.print("Could not open file", .{});
             return;
@@ -33,10 +33,10 @@ pub fn main() !void {
         },
     };
     defer {
-        for (file_contents.items) |value| {
+        for (lines.items) |value| {
             allocator.free(value);
         }
-        file_contents.deinit(allocator);
+        lines.deinit(allocator);
     }
 
     var symbol_table = try initSymbolTable(allocator);
