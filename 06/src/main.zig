@@ -22,7 +22,7 @@ pub fn main() !void {
         return;
     }
 
-    const file_contents = readFile(allocator, argv[1]) catch |err| switch (err) {
+    var file_contents = readFile(allocator, argv[1]) catch |err| switch (err) {
         error.FileNotFound => {
             std.debug.print("Could not open file", .{});
             return;
@@ -32,7 +32,12 @@ pub fn main() !void {
             return;
         },
     };
-    defer allocator.free(file_contents);
+    defer {
+        for (file_contents.items) |value| {
+            allocator.free(value);
+        }
+        file_contents.deinit(allocator);
+    }
 
     var symbol_table = try initSymbolTable(allocator);
     defer symbol_table.deinit();
@@ -68,15 +73,35 @@ fn initSymbolTable(allocator: std.mem.Allocator) !std.StringHashMap(i16) {
     return hash_map;
 }
 
-fn readFile(allocator: std.mem.Allocator, file_name: []const u8) ![]u8 {
+fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList([]u8) {
     const file = try std.fs.cwd().openFile(file_name, .{});
     defer file.close();
 
     const buffer = try allocator.alloc(u8, 32 * 1024);
     defer allocator.free(buffer);
 
+    var list = std.ArrayList([]u8).empty;
     var file_reader = file.reader(buffer);
-    const file_size = try file_reader.getSize();
-    const file_contents = try file_reader.interface.readAlloc(allocator, file_size);
-    return file_contents;
+
+    while (true) {
+        const line = file_reader.interface.takeDelimiterExclusive('\n') catch |err| {
+            switch (err) {
+                error.EndOfStream => {
+                    break;
+                },
+                else => {
+                    break;
+                },
+            }
+        };
+
+        const trimmed = if (line.len != 0 and line[line.len - 1] == '\r')
+            line[0 .. line.len - 1]
+        else
+            line;
+
+        try list.append(allocator, try allocator.dupe(u8, trimmed));
+    }
+
+    return list;
 }
