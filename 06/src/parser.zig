@@ -6,7 +6,7 @@ pub const Parser = struct {
     lines: std.ArrayList([]const u8),
     index: usize,
 
-    const ParserError = error{IndexOutOfRange};
+    const ParserError = error{IndexOutOfRange, InvalidAInstruction, InvalidCInstruction};
 
     pub fn init(allocator: std.mem.Allocator) Parser {
         return .{ .allocator = allocator, .lines = std.ArrayList([]const u8).empty, .index = 0 };
@@ -37,6 +37,41 @@ pub const Parser = struct {
 
         self.index += 1;
         return self.lines.items[self.index];
+    }
+
+    pub const Instruction = union(enum) {
+        A: AInstruction,
+        C: CInstruction,
+        Label: LabelInstruction,
+    };
+
+    pub const AInstruction = struct {
+        value: []const u8,
+    };
+
+    pub const CInstruction = struct {
+        dest: ?[]const u8,
+        comp: []const u8,
+        jump: ?[]const u8,
+    };
+
+    pub const LabelInstruction = struct {
+        name: []const u8,
+    };
+
+    pub fn instructionType(self: *Parser) ParserError!Instruction {
+        const current_line = self.lines.items[self.index];
+        if (std.mem.startsWith(u8, current_line, "@")) {
+            if (current_line.len <= 1) {
+                return ParserError.InvalidAInstruction;
+            }
+
+            const a_instruction = AInstruction{.value = current_line[1..]};
+            return Instruction{.A = a_instruction};
+        }
+
+        // TODO: Implement parsing for C and Label Instructions
+        return ParserError.InvalidCInstruction;
     }
 };
 
