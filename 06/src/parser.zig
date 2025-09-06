@@ -1,42 +1,53 @@
 const std = @import("std");
 const testing = std.testing;
 
-const ParserError = error{IndexOutOfRange};
+const Parser = struct {
+    allocator: std.mem.Allocator,
+    lines: std.ArrayList([]u8),
+    index: usize,
 
-pub fn hasMoreLines(lines: std.ArrayList([]u8), current_line_index: usize) bool {
-    if (current_line_index < lines.items.len) {
-        return true;
-    }
-    return false;
-}
+    const ParserError = error{IndexOutOfRange};
 
-pub fn advance(lines: std.ArrayList([]u8), current_line_index: *usize) ParserError![]u8 {
-    if (current_line_index.* >= lines.items.len - 1) {
-        return ParserError.IndexOutOfRange;
+    pub fn init(allocator: std.mem.Allocator) Parser {
+        return .{ .allocator = allocator, .lines = std.ArrayList([]u8).empty, .index = 0 };
     }
 
-    current_line_index.* += 1;
-    return lines.items[current_line_index.*];
-}
+    pub fn deinit(self: *Parser) void {
+        for (self.lines.items) |value| {
+            self.allocator.free(value);
+        }
+        self.lines.deinit(self.allocator);
+    }
+
+    pub fn hasMoreLines(self: *Parser) bool {
+        if (self.index < self.lines.items.len) {
+            return true;
+        }
+        return false;
+    }
+
+    pub fn advance(self: *Parser) ParserError![]u8 {
+        if (self.index >= self.lines.items.len - 1) {
+            return ParserError.IndexOutOfRange;
+        }
+
+        self.index += 1;
+        return self.lines.items[self.index];
+    }
+};
 
 test "advance increments current_line_index" {
     const allocator = testing.allocator;
 
-    var list = std.ArrayList([]u8).empty;
-    defer {
-        for (list.items) |value| {
-            allocator.free(value);
-        }
-        list.deinit(allocator);
-    }
+    var parser = Parser.init(allocator);
+    defer parser.deinit();
 
-    try list.append(allocator, try allocator.dupe(u8, "One"));
-    try list.append(allocator, try allocator.dupe(u8, "Two"));
-    try list.append(allocator, try allocator.dupe(u8, "Three"));
+    try parser.lines.append(allocator, try allocator.dupe(u8, "One"));
+    try parser.lines.append(allocator, try allocator.dupe(u8, "Two"));
+    try parser.lines.append(allocator, try allocator.dupe(u8, "Three"));
 
-    var current_line_index: usize = 0;
-    const two = try advance(list, &current_line_index);
-    const three = try advance(list, &current_line_index);
+    const two = try parser.advance();
+    const three = try parser.advance();
 
     try testing.expectEqualStrings(two, "Two");
     try testing.expectEqualStrings(three, "Three");
@@ -45,17 +56,10 @@ test "advance increments current_line_index" {
 test "advance returns OutOfBounds error" {
     const allocator = testing.allocator;
 
-    var list = std.ArrayList([]u8).empty;
-    defer {
-        for (list.items) |value| {
-            allocator.free(value);
-        }
-        list.deinit(allocator);
-    }
+    var parser = Parser.init(allocator);
+    defer parser.deinit();
 
-    try list.append(allocator, try allocator.dupe(u8, "One"));
+    try parser.lines.append(allocator, try allocator.dupe(u8, "One"));
 
-    var current_line_index: usize = 0;
-
-    try testing.expectError(ParserError.IndexOutOfRange, advance(list, &current_line_index));
+    try testing.expectError(Parser.ParserError.IndexOutOfRange, parser.advance());
 }
