@@ -1,4 +1,5 @@
 const std = @import("std");
+const testing = std.testing;
 const Parser = @import("parser.zig").Parser;
 
 pub fn main() !void {
@@ -93,10 +94,7 @@ fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList(
             }
         };
 
-        const trimmed = if (line.len != 0 and line[line.len - 1] == '\r')
-            line[0 .. line.len - 1]
-        else
-            line;
+        const trimmed = std.mem.trim(u8, line, " \t\n\r");
 
         try list.append(allocator, try allocator.dupe(u8, trimmed));
     }
