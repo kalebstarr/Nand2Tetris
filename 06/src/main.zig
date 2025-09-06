@@ -38,10 +38,6 @@ pub fn main() !void {
     var parser = Parser.initFromLines(allocator, lines);
     defer parser.deinit();
 
-    for (parser.lines.items) |value| {
-        std.debug.print("{s}\n", .{value});
-    }
-
     var symbol_table = try initSymbolTable(allocator);
     defer symbol_table.deinit();
 }
@@ -125,4 +121,28 @@ fn cleanLine(line: []const u8) cleanLineResult {
         trimmed;
 
     return cleanLineResult{ .text = comment_removed };
+}
+
+test "cleanLine skips comment- and empty lines" {
+    const expected = cleanLineResult{.is_comment_or_empty = true};
+    const comment = "// One, Two, Three";
+    const empty_string = "";
+
+    const cleaned_comment = cleanLine(comment);
+    const cleaned_empty = cleanLine(empty_string);
+
+    try testing.expectEqual(expected, cleaned_comment);
+    try testing.expectEqual(expected, cleaned_empty);
+}
+
+test "cleanLine removes comment from end of line" {
+    const expected = cleanLineResult{.text = "One, Two, Three"};
+    const comment = "One, Two, Three // Comment";
+    const no_comment = "  One, Two, Three ";
+
+    const cleaned_comment = cleanLine(comment);
+    const cleaned_no_comment = cleanLine(no_comment);
+
+    try testing.expectEqualStrings(expected.text, cleaned_comment.text);
+    try testing.expectEqualStrings(expected.text, cleaned_no_comment.text);
 }
