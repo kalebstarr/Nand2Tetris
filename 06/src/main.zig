@@ -72,14 +72,14 @@ fn initSymbolTable(allocator: std.mem.Allocator) !std.StringHashMap(i16) {
     return hash_map;
 }
 
-fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList([]u8) {
+fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList([]const u8) {
     const file = try std.fs.cwd().openFile(file_name, .{});
     defer file.close();
 
     const buffer = try allocator.alloc(u8, 32 * 1024);
     defer allocator.free(buffer);
 
-    var list = std.ArrayList([]u8).empty;
+    var list = std.ArrayList([]const u8).empty;
     var file_reader = file.reader(buffer);
 
     while (true) {
@@ -124,7 +124,7 @@ fn cleanLine(line: []const u8) cleanLineResult {
 }
 
 test "cleanLine skips comment- and empty lines" {
-    const expected = cleanLineResult{.is_comment_or_empty = true};
+    const expected = cleanLineResult{ .is_comment_or_empty = true };
     const comment = "// One, Two, Three";
     const empty_string = "";
 
@@ -136,7 +136,7 @@ test "cleanLine skips comment- and empty lines" {
 }
 
 test "cleanLine removes comment from end of line" {
-    const expected = cleanLineResult{.text = "One, Two, Three"};
+    const expected = cleanLineResult{ .text = "One, Two, Three" };
     const comment = "One, Two, Three // Comment";
     const no_comment = "  One, Two, Three ";
 

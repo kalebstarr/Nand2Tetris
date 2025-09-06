@@ -3,16 +3,16 @@ const testing = std.testing;
 
 pub const Parser = struct {
     allocator: std.mem.Allocator,
-    lines: std.ArrayList([]u8),
+    lines: std.ArrayList([]const u8),
     index: usize,
 
     const ParserError = error{IndexOutOfRange};
 
     pub fn init(allocator: std.mem.Allocator) Parser {
-        return .{ .allocator = allocator, .lines = std.ArrayList([]u8).empty, .index = 0 };
+        return .{ .allocator = allocator, .lines = std.ArrayList([]const u8).empty, .index = 0 };
     }
 
-    pub fn initFromLines(allocator: std.mem.Allocator, lines: std.ArrayList([]u8)) Parser {
+    pub fn initFromLines(allocator: std.mem.Allocator, lines: std.ArrayList([]const u8)) Parser {
         return .{ .allocator = allocator, .lines = lines, .index = 0 };
     }
 
