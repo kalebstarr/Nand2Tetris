@@ -38,6 +38,10 @@ pub fn main() !void {
     var parser = Parser.initFromLines(allocator, lines);
     defer parser.deinit();
 
+    for (parser.lines.items) |value| {
+        std.debug.print("{s}\n", .{value});
+    }
+
     var symbol_table = try initSymbolTable(allocator);
     defer symbol_table.deinit();
 }
@@ -94,10 +98,31 @@ fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList(
             }
         };
 
-        const trimmed = std.mem.trim(u8, line, " \t\n\r");
-
-        try list.append(allocator, try allocator.dupe(u8, trimmed));
+        const cleaned_line = cleanLine(line);
+        switch (cleaned_line) {
+            .is_comment_or_empty => continue,
+            .text => |in| try list.append(allocator, try allocator.dupe(u8, in)),
+        }
     }
 
     return list;
+}
+
+const cleanLineResult = union(enum) {
+    text: []const u8,
+    is_comment_or_empty: bool,
+};
+
+fn cleanLine(line: []const u8) cleanLineResult {
+    const trimmed = std.mem.trim(u8, line, " \t\n\r");
+
+    if (std.mem.startsWith(u8, trimmed, "//") or trimmed.len == 0) {
+        return cleanLineResult{ .is_comment_or_empty = true };
+    }
+    const comment_removed = if (std.mem.indexOf(u8, trimmed, "//")) |pos|
+        std.mem.trim(u8, trimmed[0..pos], " \t")
+    else
+        trimmed;
+
+    return cleanLineResult{ .text = comment_removed };
 }
