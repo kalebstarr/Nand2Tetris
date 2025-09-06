@@ -1,7 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 
-const Parser = struct {
+pub const Parser = struct {
     allocator: std.mem.Allocator,
     lines: std.ArrayList([]u8),
     index: usize,
@@ -10,6 +10,10 @@ const Parser = struct {
 
     pub fn init(allocator: std.mem.Allocator) Parser {
         return .{ .allocator = allocator, .lines = std.ArrayList([]u8).empty, .index = 0 };
+    }
+
+    pub fn initFromLines(allocator: std.mem.Allocator, lines: std.ArrayList([]u8)) Parser {
+        return .{ .allocator = allocator, .lines = lines, .index = 0 };
     }
 
     pub fn deinit(self: *Parser) void {
