@@ -1,4 +1,5 @@
 const std = @import("std");
+const Parser = @import("parser.zig").Parser;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
@@ -22,7 +23,7 @@ pub fn main() !void {
         return;
     }
 
-    var lines = readFile(allocator, argv[1]) catch |err| switch (err) {
+    const lines = readFile(allocator, argv[1]) catch |err| switch (err) {
         error.FileNotFound => {
             std.debug.print("Could not open file", .{});
             return;
@@ -32,12 +33,9 @@ pub fn main() !void {
             return;
         },
     };
-    defer {
-        for (lines.items) |value| {
-            allocator.free(value);
-        }
-        lines.deinit(allocator);
-    }
+
+    var parser = Parser.initFromLines(allocator, lines);
+    defer parser.deinit();
 
     var symbol_table = try initSymbolTable(allocator);
     defer symbol_table.deinit();
