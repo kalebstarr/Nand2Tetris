@@ -45,6 +45,24 @@ pub fn main() !void {
 
     var symbol_table = try SymbolTable.init(allocator);
     defer symbol_table.deinit();
+
+    var current_line: u16 = 0;
+
+    while (parser.hasMoreLines()) {
+        const instruction_type = try parser.instructionType();
+        switch (instruction_type) {
+            .Label => |label_instruction| {
+                const gop = try symbol_table.table.getOrPut(label_instruction.name);
+                if (gop.found_existing) {
+                    return error.LabelAlreadyExists;
+                }
+                gop.value_ptr.* = current_line;
+            },
+            else => current_line += 1,
+        }
+
+        _ = try parser.advance();
+    }
 }
 
 fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList([]const u8) {
