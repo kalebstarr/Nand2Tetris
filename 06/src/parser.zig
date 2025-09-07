@@ -6,7 +6,7 @@ pub const Parser = struct {
     lines: std.ArrayList([]const u8),
     index: usize,
 
-    const ParserError = error{ IndexOutOfRange, InvalidAInstruction, InvalidCInstruction };
+    const ParserError = error{ IndexOutOfRange, InvalidInstruction, InvalidAInstruction, InvalidCInstruction, InvalidLabelInstruction };
 
     pub fn init(allocator: std.mem.Allocator) Parser {
         return .{ .allocator = allocator, .lines = std.ArrayList([]const u8).empty, .index = 0 };
@@ -62,11 +62,14 @@ pub const Parser = struct {
     pub fn instructionType(self: *Parser) ParserError!Instruction {
         const current_line = self.lines.items[self.index];
 
-        if (std.mem.startsWith(u8, current_line, "@")) {
-            const a_instruction = try parseAInstruction(current_line);
-            if (a_instruction) |inst| {
-                return Instruction{ .A = inst };
-            }
+        const a_instruction = try parseAInstruction(current_line);
+        if (a_instruction) |inst| {
+            return Instruction{ .A = inst };
+        }
+
+        const label_instruction = try parseLabelInstruction(current_line);
+        if (label_instruction) |inst| {
+            return Instruction{ .Label = inst };
         }
 
         // TODO: Implement parsing for C and Label Instructions
@@ -74,12 +77,29 @@ pub const Parser = struct {
     }
 
     fn parseAInstruction(line: []const u8) ParserError!?AInstruction {
-        if (line.len <= 1) {
-            return ParserError.InvalidAInstruction;
+        if (std.mem.startsWith(u8, line, "@")) {
+            if (line.len <= 1) {
+                return ParserError.InvalidAInstruction;
+            }
+
+            const a_instruction = AInstruction{ .value = line[1..] };
+            return a_instruction;
         }
 
-        const a_instruction = AInstruction{ .value = line[1..] };
-        return a_instruction;
+        return null;
+    }
+
+    fn parseLabelInstruction(line: []const u8) ParserError!?LabelInstruction {
+        if (std.mem.startsWith(u8, line, "(") and std.mem.endsWith(u8, line, ")")) {
+            if (line.len <= 2) {
+                return ParserError.InvalidLabelInstruction;
+            }
+
+            const label_instruction = LabelInstruction{ .name = line[1 .. line.len - 2] };
+            return label_instruction;
+        }
+
+        return null;
     }
 };
 
