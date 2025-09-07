@@ -42,4 +42,12 @@ pub const SymbolTable = struct {
 
         return table;
     }
+
+    pub fn addSymbol(self: *SymbolTable, symbol: []const u8) !void {
+        const gop = try self.table.getOrPut(symbol);
+        if (!gop.found_existing) {
+            gop.value_ptr.* = self.new_symbol_index;
+            self.new_symbol_index += 1;
+        }
+    }
 };
