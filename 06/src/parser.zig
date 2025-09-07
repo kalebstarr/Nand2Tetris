@@ -24,7 +24,7 @@ pub const Parser = struct {
     }
 
     pub fn hasMoreLines(self: *Parser) bool {
-        if (self.index < self.lines.items.len) {
+        if (self.index < self.lines.items.len - 1) {
             return true;
         }
         return false;
