@@ -30,7 +30,7 @@ pub const Parser = struct {
         return false;
     }
 
-    pub fn advance(self: *Parser) ParserError![]u8 {
+    pub fn advance(self: *Parser) ParserError![]const u8 {
         if (self.index >= self.lines.items.len - 1) {
             return ParserError.IndexOutOfRange;
         }
