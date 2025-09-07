@@ -173,6 +173,29 @@ pub const Parser = struct {
             }
         }
     }
+
+    pub fn dest(self: *Parser) ParserError![]const u8 {
+        return getCField(try self.instructionType(), .dest);
+    }
+
+    pub fn comp(self: *Parser) ParserError![]const u8 {
+        return getCField(try self.instructionType(), .comp);
+    }
+
+    pub fn jump(self: *Parser) ParserError![]const u8 {
+        return getCField(try self.instructionType(), .jump);
+    }
+
+    fn getCField(inst: Instruction, field: enum{ dest, comp, jump }) ParserError![]const u8 {
+        return switch (inst) {
+            .C => |c| switch (field) {
+                .dest => c.dest orelse return ParserError.InvalidAction,
+                .comp => c.comp,
+                .jump => c.jump orelse return ParserError.InvalidAction,
+            },
+            else => ParserError.InvalidAction,
+        };
+    }
 };
 
 test "advance increments current_line_index" {
