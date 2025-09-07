@@ -6,7 +6,7 @@ pub const Parser = struct {
     lines: std.ArrayList([]const u8),
     index: usize,
 
-    const ParserError = error{ IndexOutOfRange, InvalidInstruction, InvalidAInstruction, InvalidCInstruction, InvalidLabelInstruction, InvalidAction };
+    const ParserError = error{ IndexOutOfRange, InvalidInstruction, InvalidAInstruction, InvalidCInstruction, InvalidLabelInstruction, InvalidAction, InvalidCInstrAction };
 
     pub fn init(allocator: std.mem.Allocator) Parser {
         return .{ .allocator = allocator, .lines = std.ArrayList([]const u8).empty, .index = 0 };
@@ -170,30 +170,39 @@ pub const Parser = struct {
             },
             .Label => |label_instruction| {
                 return label_instruction.name;
-            }
+            },
         }
     }
 
     pub fn dest(self: *Parser) ParserError![]const u8 {
-        return getCField(try self.instructionType(), .dest);
+        const instruction = try self.instructionType();
+        if (Parser.CInstruction == @TypeOf(instruction.C)) {
+            return ParserError.InvalidAction;
+        }
+        return getCField(instruction.C, .dest);
     }
 
     pub fn comp(self: *Parser) ParserError![]const u8 {
-        return getCField(try self.instructionType(), .comp);
+        const instruction = try self.instructionType();
+        if (Parser.CInstruction == @TypeOf(instruction.C)) {
+            return ParserError.InvalidAction;
+        }
+        return getCField(instruction.C, .comp);
     }
 
     pub fn jump(self: *Parser) ParserError![]const u8 {
-        return getCField(try self.instructionType(), .jump);
+        const instruction = try self.instructionType();
+        if (Parser.CInstruction == @TypeOf(instruction.C)) {
+            return ParserError.InvalidAction;
+        }
+        return getCField(instruction.C, .jump);
     }
 
-    fn getCField(inst: Instruction, field: enum{ dest, comp, jump }) ParserError![]const u8 {
-        return switch (inst) {
-            .C => |c| switch (field) {
-                .dest => c.dest orelse return ParserError.InvalidAction,
-                .comp => c.comp,
-                .jump => c.jump orelse return ParserError.InvalidAction,
-            },
-            else => ParserError.InvalidAction,
+    fn getCField(c_inst: CInstruction, field: enum { dest, comp, jump }) ParserError![]const u8 {
+        return switch (field) {
+            .dest => c_inst.dest orelse return ParserError.InvalidCInstrAction,
+            .comp => c_inst.comp,
+            .jump => c_inst.jump orelse return ParserError.InvalidCInstrAction,
         };
     }
 };
@@ -357,4 +366,30 @@ test "parseLabelInstruction returns null" {
     const parsed = try Parser.parseLabelInstruction(instruction);
 
     try testing.expect(parsed == null);
+}
+
+test "getCField returns correct field" {
+    const instruction = "D=D+A;JMP";
+
+    const parsed = try Parser.parseCInstruction(instruction);
+    const dest = try Parser.getCField(parsed, .dest);
+    const comp = try Parser.getCField(parsed, .comp);
+    const jump = try Parser.getCField(parsed, .jump);
+
+    try testing.expectEqualStrings("D", dest);
+    try testing.expectEqualStrings("D+A", comp);
+    try testing.expectEqualStrings("JMP", jump);
+}
+
+test "getCField returns correct errors" {
+    const instruction = "D+A";
+
+    const parsed = try Parser.parseCInstruction(instruction);
+    const dest = Parser.getCField(parsed, .dest);
+    const comp = try Parser.getCField(parsed, .comp);
+    const jump = Parser.getCField(parsed, .jump);
+
+    try testing.expectError(Parser.ParserError.InvalidCInstrAction, dest);
+    try testing.expectEqualStrings("D+A", comp);
+    try testing.expectError(Parser.ParserError.InvalidCInstrAction, jump);
 }
