@@ -100,7 +100,7 @@ pub const Parser = struct {
                 return ParserError.InvalidCInstruction;
             }
 
-            c_instruction.dest = line[0 .. dest_index];
+            c_instruction.dest = line[0..dest_index];
 
             if (contains_jump) |jump_index| {
                 const dest_greater_jump = (dest_index) > (jump_index);
@@ -130,7 +130,7 @@ pub const Parser = struct {
                 return ParserError.InvalidCInstruction;
             }
 
-            c_instruction.comp = line[0 .. jump_index];
+            c_instruction.comp = line[0..jump_index];
             c_instruction.jump = line[jump_index + 1 ..];
         } else {
             // Line should never be empty
