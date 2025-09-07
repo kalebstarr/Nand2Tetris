@@ -6,7 +6,7 @@ pub const Parser = struct {
     lines: std.ArrayList([]const u8),
     index: usize,
 
-    const ParserError = error{ IndexOutOfRange, InvalidInstruction, InvalidAInstruction, InvalidCInstruction, InvalidLabelInstruction };
+    const ParserError = error{ IndexOutOfRange, InvalidInstruction, InvalidAInstruction, InvalidCInstruction, InvalidLabelInstruction, InvalidAction };
 
     pub fn init(allocator: std.mem.Allocator) Parser {
         return .{ .allocator = allocator, .lines = std.ArrayList([]const u8).empty, .index = 0 };
@@ -155,6 +155,23 @@ pub const Parser = struct {
         }
 
         return null;
+    }
+
+    pub fn symbol(self: *Parser) ParserError![]const u8 {
+        const instruction = try self.instructionType();
+
+        switch (instruction) {
+            .A => |a_instruction| {
+                return a_instruction.value;
+            },
+            .C => {
+                // TODO: Use more expressive errors
+                return ParserError.InvalidAction;
+            },
+            .Label => |label_instruction| {
+                return label_instruction.name;
+            }
+        }
     }
 };
 
