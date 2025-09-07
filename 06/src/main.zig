@@ -2,7 +2,7 @@ const std = @import("std");
 const testing = std.testing;
 const Parser = @import("parser.zig").Parser;
 const Code = @import("code.zig").Code;
-const SymbolTable = @import("symbol_table.zig");
+const SymbolTable = @import("symbol_table.zig").SymbolTable;
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
