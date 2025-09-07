@@ -185,3 +185,28 @@ test "advance returns OutOfBounds error" {
 
     try testing.expectError(Parser.ParserError.IndexOutOfRange, parser.advance());
 }
+
+test "parseAInstruction parsed correctly" {
+    const expected = "One";
+    const a_instruction = "@One";
+
+    const parsed = try Parser.parseAInstruction(a_instruction);
+
+    try testing.expectEqualStrings(expected, parsed.?.value);
+}
+
+test "parseAInstruction returns error on invalid" {
+    const invalid_a_instruction = "@";
+
+    const parsed = Parser.parseAInstruction(invalid_a_instruction);
+
+    try testing.expectError(Parser.ParserError.InvalidAInstruction, parsed);
+}
+
+test "parseAInstruction returns null" {
+    const instruction = "Something else";
+
+    const parsed = try Parser.parseAInstruction(instruction);
+
+    try testing.expect(parsed == null);
+}
