@@ -97,24 +97,27 @@ pub const Parser = struct {
         const contains_dest: ?usize = std.mem.indexOf(u8, line, "=");
         const contains_jump: ?usize = std.mem.indexOf(u8, line, ";");
 
-        var c_instruction: CInstruction = undefined;
+        var c_instruction = CInstruction{ .jump = null, .comp = undefined, .dest = null };
         if (contains_dest) |dest_index| {
             if (dest_index < 1) {
                 return ParserError.InvalidCInstruction;
             }
 
-            c_instruction.dest = line[0 .. dest_index - 1];
+            c_instruction.dest = line[0 .. dest_index];
 
             if (contains_jump) |jump_index| {
                 const dest_greater_jump = (dest_index) > (jump_index);
                 const jump_greater_line = (jump_index) >= (line.len - 1);
-                const comp_smaller_1 = (jump_index - dest_index) < (1);
-                if (dest_greater_jump or jump_greater_line or comp_smaller_1) {
+                if (dest_greater_jump or jump_greater_line) {
+                    return ParserError.InvalidCInstruction;
+                }
+                const comp_smaller_1 = (jump_index - dest_index) <= (1);
+                if (comp_smaller_1) {
                     return ParserError.InvalidCInstruction;
                 }
 
                 c_instruction.jump = line[jump_index + 1 ..];
-                c_instruction.comp = line[dest_index + 1 .. jump_index - 1];
+                c_instruction.comp = line[dest_index + 1 .. jump_index];
             } else {
                 const comp_smaller_1 = (line.len - 1 - dest_index) < (1);
                 if (comp_smaller_1) {
@@ -130,7 +133,7 @@ pub const Parser = struct {
                 return ParserError.InvalidCInstruction;
             }
 
-            c_instruction.comp = line[0 .. jump_index - 1];
+            c_instruction.comp = line[0 .. jump_index];
             c_instruction.jump = line[jump_index + 1 ..];
         } else {
             // Line should never be empty
@@ -209,4 +212,59 @@ test "parseAInstruction returns null" {
     const parsed = try Parser.parseAInstruction(instruction);
 
     try testing.expect(parsed == null);
+}
+
+test "parseCInstruction parsed correctly" {
+    const expected_comp_c_instruction = Parser.CInstruction{ .dest = null, .comp = "M", .jump = null };
+    const expected_dest_comp_c_instruction = Parser.CInstruction{ .dest = "D", .comp = "D+A", .jump = null };
+    const expected_comp_jump_c_instruction = Parser.CInstruction{ .dest = null, .comp = "A", .jump = "JMP" };
+    const expected_dest_comp_jump_c_instruction = Parser.CInstruction{ .dest = "DM", .comp = "A-1", .jump = "JGT" };
+
+    const comp_c_instruction = try Parser.parseCInstruction("M");
+    const dest_comp_c_instruction = try Parser.parseCInstruction("D=D+A");
+    const comp_jump_c_instruction = try Parser.parseCInstruction("A;JMP");
+    const dest_comp_jump_c_instruction = try Parser.parseCInstruction("DM=A-1;JGT");
+
+    try testing.expectEqual(expected_comp_c_instruction.dest, comp_c_instruction.?.dest);
+    try testing.expectEqualStrings(expected_comp_c_instruction.comp, comp_c_instruction.?.comp);
+    try testing.expectEqual(expected_comp_c_instruction.jump, comp_c_instruction.?.jump);
+
+    try testing.expectEqualStrings(expected_dest_comp_c_instruction.dest.?, dest_comp_c_instruction.?.dest.?);
+    try testing.expectEqualStrings(expected_dest_comp_c_instruction.comp, dest_comp_c_instruction.?.comp);
+    try testing.expectEqual(expected_dest_comp_c_instruction.jump, dest_comp_c_instruction.?.jump);
+
+    try testing.expectEqual(expected_comp_jump_c_instruction.dest, comp_jump_c_instruction.?.dest);
+    try testing.expectEqualStrings(expected_comp_jump_c_instruction.comp, comp_jump_c_instruction.?.comp);
+    try testing.expectEqualStrings(expected_comp_jump_c_instruction.jump.?, comp_jump_c_instruction.?.jump.?);
+
+    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.dest.?, dest_comp_jump_c_instruction.?.dest.?);
+    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.comp, dest_comp_jump_c_instruction.?.comp);
+    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.jump.?, dest_comp_jump_c_instruction.?.jump.?);
+}
+
+test "parseCInstruction returns error on invalid" {
+    // Empty line shouldn't happen
+    const invalid = "";
+    const invalid_dest_index = "AD=";
+    const dest_greater_jump = "M;D=JGT";
+    const invalid_jump_index = "DM=D+A;";
+    const no_comp = "D=;JMP";
+    const jump_first_char = ";JEQ";
+    const jump_greater_line = "D+M;";
+
+    const parsed_invalid = Parser.parseCInstruction(invalid);
+    const parsed_invalid_dest_index = Parser.parseCInstruction(invalid_dest_index);
+    const parsed_dest_greater_jump = Parser.parseCInstruction(dest_greater_jump);
+    const parsed_invalid_jump_index = Parser.parseCInstruction(invalid_jump_index);
+    const parsed_no_comp = Parser.parseCInstruction(no_comp);
+    const parsed_first_char = Parser.parseCInstruction(jump_first_char);
+    const parsed_jump_greater_line = Parser.parseCInstruction(jump_greater_line);
+
+    try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_invalid);
+    try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_invalid_dest_index);
+    try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_dest_greater_jump);
+    try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_invalid_jump_index);
+    try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_no_comp);
+    try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_first_char);
+    try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_jump_greater_line);
 }
