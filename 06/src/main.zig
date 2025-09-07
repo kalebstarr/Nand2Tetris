@@ -40,9 +40,6 @@ pub fn main() !void {
     var parser = Parser.initFromLines(allocator, lines);
     defer parser.deinit();
 
-    _ = try parser.instructionType();
-    _ = try parser.jump();
-
     var code = try Code.init(allocator);
     defer code.deinit();
 
