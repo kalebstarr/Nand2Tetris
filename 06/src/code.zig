@@ -83,4 +83,19 @@ pub const Code = struct {
 
         return jump_table;
     }
+
+    pub fn dest(self: *Code, dest_string: []const u8) ?[]const u8 {
+        const bin_rep = self.dest_table.get(dest_string);
+        return bin_rep;
+    }
+
+    pub fn comp(self: *Code, comp_string: []const u8) ?[]const u8 {
+        const bin_rep = self.comp_table.get(comp_string);
+        return bin_rep;
+    }
+
+    pub fn jump(self: *Code, jump_string: []const u8) ?[]const u8 {
+        const bin_rep = self.jump_table.get(jump_string);
+        return bin_rep;
+    }
 };
