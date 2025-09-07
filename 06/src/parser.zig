@@ -186,6 +186,34 @@ test "advance returns OutOfBounds error" {
     try testing.expectError(Parser.ParserError.IndexOutOfRange, parser.advance());
 }
 
+test "instructionType determines correct instruction" {
+    const a_instruction = "@One";
+    const c_instruction = "DM=A+1;JMP";
+    const label_instruction = "(One)";
+
+    const allocator = testing.allocator;
+    var parser = Parser.init(allocator);
+    defer parser.deinit();
+
+    try parser.lines.append(allocator, try allocator.dupe(u8, a_instruction));
+    try parser.lines.append(allocator, try allocator.dupe(u8, c_instruction));
+    try parser.lines.append(allocator, try allocator.dupe(u8, label_instruction));
+
+    const type_a_instruction = try parser.instructionType();
+    try testing.expect(type_a_instruction == .A);
+    try testing.expectEqual(Parser.AInstruction, @TypeOf(type_a_instruction.A));
+
+    _ = try parser.advance();
+    const type_c_instruction = try parser.instructionType();
+    try testing.expect(type_c_instruction == .C);
+    try testing.expectEqual(Parser.CInstruction, @TypeOf(type_c_instruction.C));
+
+    _ = try parser.advance();
+    const type_label_instruction = try parser.instructionType();
+    try testing.expect(type_label_instruction == .Label);
+    try testing.expectEqual(Parser.LabelInstruction, @TypeOf(type_label_instruction.Label));
+}
+
 test "parseAInstruction parsed correctly" {
     const expected = "One";
     const a_instruction = "@One";
