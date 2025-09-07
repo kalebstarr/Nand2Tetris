@@ -46,6 +46,10 @@ pub fn main() !void {
     var symbol_table = try SymbolTable.init(allocator);
     defer symbol_table.deinit();
 
+    try firstPass(&parser, &symbol_table);
+}
+
+fn firstPass(parser: *Parser, symbol_table: *SymbolTable) !void {
     var current_line: u16 = 0;
 
     while (parser.hasMoreLines()) {
