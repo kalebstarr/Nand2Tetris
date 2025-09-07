@@ -72,8 +72,12 @@ pub const Parser = struct {
             return Instruction{ .Label = inst };
         }
 
-        // TODO: Implement parsing for C and Label Instructions
-        return ParserError.InvalidCInstruction;
+        const c_instruction = try parseCInstruction(current_line);
+        if (c_instruction) |inst| {
+            return Instruction{ .C = inst };
+        }
+
+        return ParserError.InvalidInstruction;
     }
 
     fn parseAInstruction(line: []const u8) ParserError!?AInstruction {
@@ -87,6 +91,57 @@ pub const Parser = struct {
         }
 
         return null;
+    }
+
+    fn parseCInstruction(line: []const u8) ParserError!?CInstruction {
+        const contains_dest: ?usize = std.mem.indexOf(u8, line, "=");
+        const contains_jump: ?usize = std.mem.indexOf(u8, line, ";");
+
+        var c_instruction: CInstruction = undefined;
+        if (contains_dest) |dest_index| {
+            if (dest_index < 1) {
+                return ParserError.InvalidCInstruction;
+            }
+
+            c_instruction.dest = line[0 .. dest_index - 1];
+
+            if (contains_jump) |jump_index| {
+                const dest_greater_jump = (dest_index) > (jump_index);
+                const jump_greater_line = (jump_index) >= (line.len - 1);
+                const comp_smaller_1 = (jump_index - dest_index) < (1);
+                if (dest_greater_jump or jump_greater_line or comp_smaller_1) {
+                    return ParserError.InvalidCInstruction;
+                }
+
+                c_instruction.jump = line[jump_index + 1 ..];
+                c_instruction.comp = line[dest_index + 1 .. jump_index - 1];
+            } else {
+                const comp_smaller_1 = (line.len - 1 - dest_index) < (1);
+                if (comp_smaller_1) {
+                    return ParserError.InvalidCInstruction;
+                }
+
+                c_instruction.comp = line[dest_index + 1 ..];
+            }
+        } else if (contains_jump) |jump_index| {
+            const jump_is_first_char = (jump_index) < (1);
+            const jump_greater_line = (jump_index) >= (line.len - 1);
+            if (jump_is_first_char or jump_greater_line) {
+                return ParserError.InvalidCInstruction;
+            }
+
+            c_instruction.comp = line[0 .. jump_index - 1];
+            c_instruction.jump = line[jump_index + 1 ..];
+        } else {
+            // Line should never be empty
+            if ((line.len) < (1)) {
+                return ParserError.InvalidCInstruction;
+            }
+
+            c_instruction.comp = line;
+        }
+
+        return c_instruction;
     }
 
     fn parseLabelInstruction(line: []const u8) ParserError!?LabelInstruction {
