@@ -176,7 +176,7 @@ pub const Parser = struct {
 
     pub fn dest(self: *Parser) ParserError![]const u8 {
         const instruction = try self.instructionType();
-        if (Parser.CInstruction == @TypeOf(instruction.C)) {
+        if (Parser.CInstruction != @TypeOf(instruction.C)) {
             return ParserError.InvalidAction;
         }
         return getCField(instruction.C, .dest);
@@ -184,7 +184,7 @@ pub const Parser = struct {
 
     pub fn comp(self: *Parser) ParserError![]const u8 {
         const instruction = try self.instructionType();
-        if (Parser.CInstruction == @TypeOf(instruction.C)) {
+        if (Parser.CInstruction != @TypeOf(instruction.C)) {
             return ParserError.InvalidAction;
         }
         return getCField(instruction.C, .comp);
@@ -192,7 +192,7 @@ pub const Parser = struct {
 
     pub fn jump(self: *Parser) ParserError![]const u8 {
         const instruction = try self.instructionType();
-        if (Parser.CInstruction == @TypeOf(instruction.C)) {
+        if (Parser.CInstruction != @TypeOf(instruction.C)) {
             return ParserError.InvalidAction;
         }
         return getCField(instruction.C, .jump);
