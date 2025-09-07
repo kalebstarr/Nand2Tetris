@@ -150,7 +150,7 @@ pub const Parser = struct {
                 return ParserError.InvalidLabelInstruction;
             }
 
-            const label_instruction = LabelInstruction{ .name = line[1 .. line.len - 2] };
+            const label_instruction = LabelInstruction{ .name = line[1 .. line.len - 1] };
             return label_instruction;
         }
 
@@ -204,7 +204,7 @@ test "parseAInstruction returns error on invalid" {
 }
 
 test "parseAInstruction returns null" {
-    const instruction = "Something else";
+    const instruction = "D=D+A;JMP";
 
     const parsed = try Parser.parseAInstruction(instruction);
 
@@ -264,4 +264,29 @@ test "parseCInstruction returns error on invalid" {
     try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_no_comp);
     try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_first_char);
     try testing.expectError(Parser.ParserError.InvalidCInstruction, parsed_jump_greater_line);
+}
+
+test "parseLabelInstruction parsed correctly" {
+    const expected = "One";
+    const label_instruction = "(One)";
+
+    const parsed = try Parser.parseLabelInstruction(label_instruction);
+
+    try testing.expectEqualStrings(expected, parsed.?.name);
+}
+
+test "parseLabelInstruction returns error on invalid" {
+    const invalid_label_instruction = "()";
+
+    const parsed = Parser.parseLabelInstruction(invalid_label_instruction);
+
+    try testing.expectError(Parser.ParserError.InvalidLabelInstruction, parsed);
+}
+
+test "parseLabelInstruction returns null" {
+    const instruction = "D=D+A;JMP";
+
+    const parsed = try Parser.parseLabelInstruction(instruction);
+
+    try testing.expect(parsed == null);
 }
