@@ -73,11 +73,8 @@ pub const Parser = struct {
         }
 
         const c_instruction = try parseCInstruction(current_line);
-        if (c_instruction) |inst| {
-            return Instruction{ .C = inst };
-        }
 
-        return ParserError.InvalidInstruction;
+        return Instruction{ .C = c_instruction };
     }
 
     fn parseAInstruction(line: []const u8) ParserError!?AInstruction {
@@ -93,7 +90,7 @@ pub const Parser = struct {
         return null;
     }
 
-    fn parseCInstruction(line: []const u8) ParserError!?CInstruction {
+    fn parseCInstruction(line: []const u8) ParserError!CInstruction {
         const contains_dest: ?usize = std.mem.indexOf(u8, line, "=");
         const contains_jump: ?usize = std.mem.indexOf(u8, line, ";");
 
@@ -225,21 +222,21 @@ test "parseCInstruction parsed correctly" {
     const comp_jump_c_instruction = try Parser.parseCInstruction("A;JMP");
     const dest_comp_jump_c_instruction = try Parser.parseCInstruction("DM=A-1;JGT");
 
-    try testing.expectEqual(expected_comp_c_instruction.dest, comp_c_instruction.?.dest);
-    try testing.expectEqualStrings(expected_comp_c_instruction.comp, comp_c_instruction.?.comp);
-    try testing.expectEqual(expected_comp_c_instruction.jump, comp_c_instruction.?.jump);
+    try testing.expectEqual(expected_comp_c_instruction.dest, comp_c_instruction.dest);
+    try testing.expectEqualStrings(expected_comp_c_instruction.comp, comp_c_instruction.comp);
+    try testing.expectEqual(expected_comp_c_instruction.jump, comp_c_instruction.jump);
 
-    try testing.expectEqualStrings(expected_dest_comp_c_instruction.dest.?, dest_comp_c_instruction.?.dest.?);
-    try testing.expectEqualStrings(expected_dest_comp_c_instruction.comp, dest_comp_c_instruction.?.comp);
-    try testing.expectEqual(expected_dest_comp_c_instruction.jump, dest_comp_c_instruction.?.jump);
+    try testing.expectEqualStrings(expected_dest_comp_c_instruction.dest.?, dest_comp_c_instruction.dest.?);
+    try testing.expectEqualStrings(expected_dest_comp_c_instruction.comp, dest_comp_c_instruction.comp);
+    try testing.expectEqual(expected_dest_comp_c_instruction.jump, dest_comp_c_instruction.jump);
 
-    try testing.expectEqual(expected_comp_jump_c_instruction.dest, comp_jump_c_instruction.?.dest);
-    try testing.expectEqualStrings(expected_comp_jump_c_instruction.comp, comp_jump_c_instruction.?.comp);
-    try testing.expectEqualStrings(expected_comp_jump_c_instruction.jump.?, comp_jump_c_instruction.?.jump.?);
+    try testing.expectEqual(expected_comp_jump_c_instruction.dest, comp_jump_c_instruction.dest);
+    try testing.expectEqualStrings(expected_comp_jump_c_instruction.comp, comp_jump_c_instruction.comp);
+    try testing.expectEqualStrings(expected_comp_jump_c_instruction.jump.?, comp_jump_c_instruction.jump.?);
 
-    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.dest.?, dest_comp_jump_c_instruction.?.dest.?);
-    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.comp, dest_comp_jump_c_instruction.?.comp);
-    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.jump.?, dest_comp_jump_c_instruction.?.jump.?);
+    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.dest.?, dest_comp_jump_c_instruction.dest.?);
+    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.comp, dest_comp_jump_c_instruction.comp);
+    try testing.expectEqualStrings(expected_dest_comp_jump_c_instruction.jump.?, dest_comp_jump_c_instruction.jump.?);
 }
 
 test "parseCInstruction returns error on invalid" {
