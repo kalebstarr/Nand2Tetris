@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub const SymbolTable = struct {
     allocator: std.mem.Allocator,
-    table: std.StringHashMap(i16),
+    table: std.StringHashMap(u16),
     new_symbol_index: u16,
 
     pub fn init(allocator: std.mem.Allocator) !SymbolTable {
@@ -13,8 +13,8 @@ pub const SymbolTable = struct {
         self.table.deinit();
     }
 
-    fn initSymbolTable(allocator: std.mem.Allocator) !std.StringHashMap(i16) {
-        var table = std.StringHashMap(i16).init(allocator);
+    fn initSymbolTable(allocator: std.mem.Allocator) !std.StringHashMap(u16) {
+        var table = std.StringHashMap(u16).init(allocator);
 
         try table.put("R0", 0);
         try table.put("R1", 1);
