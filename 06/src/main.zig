@@ -49,6 +49,14 @@ pub fn main() !void {
     try firstPass(&parser, &symbol_table);
     parser.reset();
 
+    var output = std.ArrayList([]const u8).empty;
+    defer {
+        for (output.items) |value| {
+            allocator.free(value);
+        }
+        output.deinit(allocator);
+    }
+
     // TODO: Improve code readability
     while (parser.hasMoreLines()) {
         const instruction_type = try parser.instructionType();
@@ -63,13 +71,17 @@ pub fn main() !void {
                         try symbol_table.addSymbol(a_instruction.value);
                     }
                     const number = symbol_table.table.get(a_instruction.value);
-                    _ = number;
-                    // TODO: Add number to output
+
+                    var buffer: [32]u8 = undefined;
+                    const s = try std.fmt.bufPrint(&buffer, "{b:0>16}", .{number.?});
+                    try output.append(allocator, try allocator.dupe(u8, s));
                 } else if (parsed == error.Overflow) {
                     std.debug.print("Something went wrong\n", .{});
                     return error.Overflow;
                 } else {
-                    // TODO: Add parsed to output
+                    var buffer: [32]u8 = undefined;
+                    const s = try std.fmt.bufPrint(&buffer, "{b:0>16}", .{try parsed});
+                    try output.append(allocator, try allocator.dupe(u8, s));
                 }
             },
             .C => {
@@ -94,7 +106,8 @@ pub fn main() !void {
                     jump.?,
                 });
                 defer allocator.free(concatted);
-                // TODO: Add to output
+
+                try output.append(allocator, try allocator.dupe(u8, concatted));
             },
         }
 
