@@ -178,19 +178,20 @@ pub const Parser = struct {
         }
     }
 
-    pub fn dest(self: *Parser) ParserError![]const u8 {
+    pub fn dest(self: *Parser) !?[]const u8 {
         const instruction = try self.instructionType();
         try validateIsCInstruction(instruction);
         return getCField(instruction.C, .dest);
     }
 
-    pub fn comp(self: *Parser) ParserError![]const u8 {
+    pub fn comp(self: *Parser) ![]const u8 {
         const instruction = try self.instructionType();
         try validateIsCInstruction(instruction);
-        return getCField(instruction.C, .comp);
+        const c_field = getCField(instruction.C, .comp);
+        return c_field.?;
     }
 
-    pub fn jump(self: *Parser) ParserError![]const u8 {
+    pub fn jump(self: *Parser) !?[]const u8 {
         const instruction = try self.instructionType();
         try validateIsCInstruction(instruction);
         return getCField(instruction.C, .jump);
@@ -202,11 +203,11 @@ pub const Parser = struct {
         }
     }
 
-    fn getCField(c_inst: CInstruction, field: enum { dest, comp, jump }) ParserError![]const u8 {
+    fn getCField(c_inst: CInstruction, field: enum { dest, comp, jump }) ?[]const u8 {
         return switch (field) {
-            .dest => c_inst.dest orelse return ParserError.InvalidCInstrAction,
+            .dest => c_inst.dest,
             .comp => c_inst.comp,
-            .jump => c_inst.jump orelse return ParserError.InvalidCInstrAction,
+            .jump => c_inst.jump,
         };
     }
 };
