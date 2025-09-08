@@ -47,6 +47,59 @@ pub fn main() !void {
     defer symbol_table.deinit();
 
     try firstPass(&parser, &symbol_table);
+    parser.reset();
+
+    // TODO: Improve code readability
+    while (parser.hasMoreLines()) {
+        const instruction_type = try parser.instructionType();
+        switch (instruction_type) {
+            .Label => {},
+            .A => |a_instruction| {
+                const parsed = std.fmt.parseInt(u16, a_instruction.value, 10);
+
+                if (parsed == error.InvalidCharacter) {
+                    const contains = symbol_table.table.contains(a_instruction.value);
+                    if (!contains) {
+                        try symbol_table.addSymbol(a_instruction.value);
+                    }
+                    const number = symbol_table.table.get(a_instruction.value);
+                    _ = number;
+                    // TODO: Add number to output
+                } else if (parsed == error.Overflow) {
+                    std.debug.print("Something went wrong\n", .{});
+                    return error.Overflow;
+                } else {
+                    // TODO: Add parsed to output
+                }
+            },
+            .C => {
+                const parse_dest_opt = try parser.dest();
+                const parse_comp = try parser.comp();
+                const parse_jump_opt = try parser.jump();
+
+                const dest = if (parse_dest_opt) |dest_val|
+                    code.dest(dest_val)
+                else
+                    code.dest("null");
+                const comp = code.comp(parse_comp);
+                const jump = if (parse_jump_opt) |jump_val|
+                    code.jump(jump_val)
+                else
+                    code.jump("null");
+
+                const concatted = try std.mem.concat(allocator, u8, &[_][]const u8{
+                    "111",
+                    comp.?,
+                    dest.?,
+                    jump.?,
+                });
+                defer allocator.free(concatted);
+                // TODO: Add to output
+            },
+        }
+
+        try parser.advance();
+    }
 }
 
 fn firstPass(parser: *Parser, symbol_table: *SymbolTable) !void {
@@ -65,7 +118,7 @@ fn firstPass(parser: *Parser, symbol_table: *SymbolTable) !void {
             else => current_line += 1,
         }
 
-        _ = try parser.advance();
+        try parser.advance();
     }
 }
 
