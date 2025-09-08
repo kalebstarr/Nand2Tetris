@@ -58,6 +58,8 @@ pub fn main() !void {
     }
 
     try secondPass(allocator, &output, &parser, &symbol_table, &code);
+
+    try writeFile(allocator, &output, argv[1]);
 }
 
 fn firstPass(parser: *Parser, symbol_table: *SymbolTable) !void {
@@ -138,6 +140,29 @@ fn secondPass(allocator: std.mem.Allocator, output: *std.ArrayList([]const u8), 
 
         try parser.advance();
     }
+}
+
+fn writeFile(allocator: std.mem.Allocator, output: *std.ArrayList([]const u8), file_name: []const u8) !void {
+    const dot_index = std.mem.indexOf(u8, file_name, ".");
+    const hack_file_name = try std.mem.concat(allocator, u8, &[_][]const u8{
+        file_name[0..dot_index.?],
+        ".hack",
+    });
+    defer allocator.free(hack_file_name);
+
+    const file = try std.fs.cwd().createFile(hack_file_name, .{});
+    defer file.close();
+
+    const buffer = try allocator.alloc(u8, 32 * 1024);
+    defer allocator.free(buffer);
+    var file_writer = file.writer(buffer);
+
+    for (output.items) |line| {
+        try file_writer.interface.writeAll(line);
+        try file_writer.interface.writeByte('\n');
+    }
+
+    try file_writer.interface.flush();
 }
 
 fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList([]const u8) {
