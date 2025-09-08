@@ -23,10 +23,18 @@ pub const Code = struct {
         try dest_table.put("M", "001");
         try dest_table.put("D", "010");
         try dest_table.put("DM", "011");
+        try dest_table.put("MD", "011");
         try dest_table.put("A", "100");
         try dest_table.put("AM", "101");
+        try dest_table.put("MA", "101");
         try dest_table.put("AD", "110");
+        try dest_table.put("DA", "110");
         try dest_table.put("ADM", "111");
+        try dest_table.put("AMD", "111");
+        try dest_table.put("DAM", "111");
+        try dest_table.put("DMA", "111");
+        try dest_table.put("MAD", "111");
+        try dest_table.put("MDA", "111");
 
         return dest_table;
     }
