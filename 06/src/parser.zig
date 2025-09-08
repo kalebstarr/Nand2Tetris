@@ -24,19 +24,18 @@ pub const Parser = struct {
     }
 
     pub fn hasMoreLines(self: *Parser) bool {
-        if (self.index < self.lines.items.len - 1) {
+        if (self.index < self.lines.items.len) {
             return true;
         }
         return false;
     }
 
-    pub fn advance(self: *Parser) ParserError![]const u8 {
-        if (self.index >= self.lines.items.len - 1) {
+    pub fn advance(self: *Parser) ParserError!void {
+        if (self.index >= self.lines.items.len) {
             return ParserError.IndexOutOfRange;
         }
 
         self.index += 1;
-        return self.lines.items[self.index];
     }
 
     pub fn reset(self: *Parser) void {
