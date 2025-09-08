@@ -57,6 +57,30 @@ pub fn main() !void {
         output.deinit(allocator);
     }
 
+    try secondPass(allocator, &output, &parser, &symbol_table, &code);
+}
+
+fn firstPass(parser: *Parser, symbol_table: *SymbolTable) !void {
+    var current_line: u16 = 0;
+
+    while (parser.hasMoreLines()) {
+        const instruction_type = try parser.instructionType();
+        switch (instruction_type) {
+            .Label => |label_instruction| {
+                const gop = try symbol_table.table.getOrPut(label_instruction.name);
+                if (gop.found_existing) {
+                    return error.LabelAlreadyExists;
+                }
+                gop.value_ptr.* = current_line;
+            },
+            else => current_line += 1,
+        }
+
+        try parser.advance();
+    }
+}
+
+fn secondPass(allocator: std.mem.Allocator, output: *std.ArrayList([]const u8), parser: *Parser, symbol_table: *SymbolTable, code: *Code) !void {
     // TODO: Improve code readability
     while (parser.hasMoreLines()) {
         const instruction_type = try parser.instructionType();
@@ -65,24 +89,25 @@ pub fn main() !void {
             .A => |a_instruction| {
                 const parsed = std.fmt.parseInt(u16, a_instruction.value, 10);
 
+                var number: u16 = undefined;
+
                 if (parsed == error.InvalidCharacter) {
                     const contains = symbol_table.table.contains(a_instruction.value);
                     if (!contains) {
                         try symbol_table.addSymbol(a_instruction.value);
                     }
-                    const number = symbol_table.table.get(a_instruction.value);
-
-                    var buffer: [32]u8 = undefined;
-                    const s = try std.fmt.bufPrint(&buffer, "{b:0>16}", .{number.?});
-                    try output.append(allocator, try allocator.dupe(u8, s));
+                    const num = symbol_table.table.get(a_instruction.value);
+                    number = num.?;
                 } else if (parsed == error.Overflow) {
                     std.debug.print("Something went wrong\n", .{});
                     return error.Overflow;
                 } else {
-                    var buffer: [32]u8 = undefined;
-                    const s = try std.fmt.bufPrint(&buffer, "{b:0>16}", .{try parsed});
-                    try output.append(allocator, try allocator.dupe(u8, s));
+                    number = try parsed;
                 }
+
+                var buffer: [32]u8 = undefined;
+                const s = try std.fmt.bufPrint(&buffer, "{b:0>16}", .{number});
+                try output.append(allocator, try allocator.dupe(u8, s));
             },
             .C => {
                 const parse_dest_opt = try parser.dest();
@@ -109,26 +134,6 @@ pub fn main() !void {
 
                 try output.append(allocator, try allocator.dupe(u8, concatted));
             },
-        }
-
-        try parser.advance();
-    }
-}
-
-fn firstPass(parser: *Parser, symbol_table: *SymbolTable) !void {
-    var current_line: u16 = 0;
-
-    while (parser.hasMoreLines()) {
-        const instruction_type = try parser.instructionType();
-        switch (instruction_type) {
-            .Label => |label_instruction| {
-                const gop = try symbol_table.table.getOrPut(label_instruction.name);
-                if (gop.found_existing) {
-                    return error.LabelAlreadyExists;
-                }
-                gop.value_ptr.* = current_line;
-            },
-            else => current_line += 1,
         }
 
         try parser.advance();
