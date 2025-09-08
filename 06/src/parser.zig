@@ -39,6 +39,10 @@ pub const Parser = struct {
         return self.lines.items[self.index];
     }
 
+    pub fn reset(self: *Parser) void {
+        self.index = 0;
+    }
+
     pub const Instruction = union(enum) {
         A: AInstruction,
         C: CInstruction,
