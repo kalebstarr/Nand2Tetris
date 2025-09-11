@@ -3,4 +3,4 @@
 .zig-cache/
 zig-out/
 
-06/example/
+example/
