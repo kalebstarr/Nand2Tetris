@@ -1,7 +1,8 @@
 const std = @import("std");
+const Parser = @import("parser.zig").Parser;
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{});
+    var gpa = std.heap.GeneralPurposeAllocator(.{}).init;
     defer {
         const gpa_status = gpa.deinit();
         if (gpa_status == .leak) {
@@ -23,5 +24,9 @@ pub fn main() !void {
         std.debug.print("Invalid file name", .{});
         return;
     }
-}
 
+    var parser = Parser.init(allocator);
+    defer parser.deinit();
+
+    try parser.readFile(file_name);
+}
