@@ -1,6 +1,12 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 pub fn build(b: *std.Build) void {
+    const required = std.SemanticVersion.parse("0.15.1") catch unreachable;
+    if (std.SemanticVersion.order(builtin.zig_version, required) == .lt) {
+        @panic("This project requires Zig 0.15.1");
+    }
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
