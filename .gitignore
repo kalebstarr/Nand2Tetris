@@ -1,4 +1,6 @@
 *.zip
 
-06/.zig-cache/
-06/zig-out/
+.zig-cache/
+zig-out/
+
+06/example/
