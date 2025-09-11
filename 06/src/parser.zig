@@ -1,6 +1,15 @@
 const std = @import("std");
 const testing = std.testing;
 
+// I don't know if I like the hidden state like index.
+// -> reset fn patches this but is more of an afterthought.
+// Return types and errors are also lacking/unstructured.
+// -> e.g. return of advance is never used in actual code.
+// advance and hasMoreLines coop in main loop feels unnatural.
+// getCField feels partly useless.
+// symbol fn is not really used. May be an oversight of use on my part.
+// dest, comp and jump flow is lacking and feels unnatural in main.
+// Testing is only implemented for half of functions.
 pub const Parser = struct {
     allocator: std.mem.Allocator,
     lines: std.ArrayList([]const u8),

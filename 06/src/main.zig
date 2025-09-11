@@ -153,6 +153,7 @@ fn writeFile(allocator: std.mem.Allocator, output: *std.ArrayList([]const u8), f
     const file = try std.fs.cwd().createFile(hack_file_name, .{});
     defer file.close();
 
+    // TODO: Change to non-allocated buffer
     const buffer = try allocator.alloc(u8, 32 * 1024);
     defer allocator.free(buffer);
     var file_writer = file.writer(buffer);
@@ -169,6 +170,7 @@ fn readFile(allocator: std.mem.Allocator, file_name: []const u8) !std.ArrayList(
     const file = try std.fs.cwd().openFile(file_name, .{});
     defer file.close();
 
+    // TODO: Change to non-allocated buffer
     const buffer = try allocator.alloc(u8, 32 * 1024);
     defer allocator.free(buffer);
 
